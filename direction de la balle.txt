@@ -1,0 +1,7 @@
+addresse: ff80
+1 1 1 1
+    y x
+
+0 pour bas/droite et 1 pour haut/gauche
+
+donc [ff80] = 0000 au début
