@@ -75,6 +75,12 @@ Main:
   cp 144
   jp nc, Main
   ld a , [wFrameCounter]
+  inc a
+  ld [wFrameCounter] , a
+  cp $FFFF
+  jpz Main
+  ld a , 0
+  ld [wFrameCounter] , a
 WaitVBlank2:
   ld a, [rLY]
   cp 144
@@ -140,7 +146,7 @@ Right:
   ld a, [_OAMRAM + 1]
   add a, $1
   ; If we've already hit the edge of the playfield, don't move.
-  cp a, $A0
+  cp a, $A1
   jp z, Main
   ld [_OAMRAM + 1], a
   jp Main
