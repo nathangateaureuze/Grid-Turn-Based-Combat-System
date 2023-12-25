@@ -1,4 +1,4 @@
-INCLUDE "inc/hardware.inc"
+INCLUDE "hardware.inc"
 
 DEF BRICK_LEFT EQU $05
 DEF BRICK_RIGHT EQU $06
@@ -33,9 +33,9 @@ WaitVBlank:
   call Memcopy
 
   ; Copy the tile data
-  ld de, Player
+  ld de, Paddle
   ld hl, $8000
-  ld bc, PlayerEnd - Player
+  ld bc, PaddleEnd - Paddle
   call Memcopy
 
 	ld a , 0 
@@ -47,7 +47,7 @@ ClearOam:
 	jp nz , ClearOam
 	ld hl , _OAMRAM
 
-  ; Initialize the player sprite in OAM
+  ; Initialize the paddle sprite in OAM
   ld hl, _OAMRAM
   ld a, 128 + 16
   ld [hli], a
@@ -65,17 +65,17 @@ ClearOam:
 	ld [rBGP] , a
 	ld [rOBP0] , a
 
-	ld a , %0011
-	ld [$FF80] , a
 
 	ld a , 0
 	ld [wFrameCounter] , a
 Main:
-  ld a, [rLY]
-  cp 144
-  jp nc, Main
-  ld a , 0
+  ld a , [wFrameCounter]
+  inc a
   ld [wFrameCounter] , a
+  cp 60 					;Frames to Wait
+  jp c, Main
+	ld a , 0
+	ld [wFrameCounter] , a
 WaitVBlank2:
   ld a, [rLY]
   cp 144
@@ -86,109 +86,105 @@ WaitVBlank2:
 
 
 
-  ; First, check if the down button is pressed.
+; Then check the right button.
 CheckDown:
   ld a, [wCurKeys]
   and a, PADF_DOWN
-  jp nz, CheckAlreadyDown
-  ld a, [wPressedKeys]
-  RES 7, a
-  ld [wPressedKeys], a
-  jp CheckUp
-CheckAlreadyDown:
-	ld a, [wPressedKeys]
-	BIT 7, a
-	jp nz, CheckUp
-Down:
-	ld a, [wPressedKeys]
-	or a, %1000_0000
-	ld [wPressedKeys], a
-  ; Move the player one pixel to the right.
+  jp z, CheckUp
+DownPress:
+  
+  ld a , [wPressedKeys]
+  or %0010000
+  ld [wPressedKeys] , a
+
+  ; Move the paddle one pixel to the right.
   ld a, [_OAMRAM]
-  add a, $8
+  add a, $1
   ; If we've already hit the edge of the playfield, don't move.
   cp a, $98 + 1
   jp z, Main
   ld [_OAMRAM], a
   jp Main
+DownRelease:
+  ld a , [wPressedKeys]
+  xor %0010000
+  ld [wPressedKeys] , a
+	jp Main
 
 ; Then check the right button.
 CheckUp:
   ld a, [wCurKeys]
   and a, PADF_UP
-  jp nz, CheckAlreadyUp
-  ld a, [wPressedKeys]
-  RES 6, a
-  ld [wPressedKeys], a
-  jp CheckLeft
-CheckAlreadyUp:
-	ld a, [wPressedKeys]
-	BIT 6, a
-	jp nz, CheckLeft
-Up:
-	ld a, [wPressedKeys]
-	or a, %0100_0000
-	ld [wPressedKeys], a
-  ; Move the player one pixel to the right.
+  jp z, CheckLeft
+UpPress:
+  
+  ld a , [wPressedKeys]
+  or %1000000
+  ld [wPressedKeys] , a
+
+  ; Move the paddle one pixel to the right.
   ld a, [_OAMRAM]
-	sub a, $8
+	sub a, $1
   ; If we've already hit the edge of the playfield, don't move.
   cp a, $F
   jp z, Main
   ld [_OAMRAM], a
   jp Main
+UpRelease:
+  ld a , [wPressedKeys]
+  xor %1000000
+  ld [wPressedKeys] , a
+	jp Main
 
   ; First, check if the left button is pressed.
 CheckLeft:
   ld a, [wCurKeys]
-  and a, PADF_LEFT
-  jp nz, CheckAlreadyLeft
-  ld a, [wPressedKeys]
-  RES 5, a
-  ld [wPressedKeys], a
-  jp CheckRight
-CheckAlreadyLeft:
-	ld a, [wPressedKeys]
-	BIT 5, a
-	jp nz, CheckRight
-Left:
-	ld a, [wPressedKeys]
-	or a, %0010_0000
-	ld [wPressedKeys], a
-	; Move the player one pixel to the left.
+	and a, PADF_LEFT
+	jp z, CheckRight
+LeftPress:
+  
+  ld a , [wPressedKeys]
+  or %0100000
+  ld [wPressedKeys] , a
+
+	; Move the paddle one pixel to the left.
 	ld a, [_OAMRAM + 1]
-	sub a, $8
+	sub a, $1
 	; If we've already hit the edge of the playfield, don't move.
 	cp a, $7
 	jp z, Main
 	ld [_OAMRAM + 1], a
+	jp Main
+LeftRelease:
+  ld a , [wPressedKeys]
+  xor %0100000
+  ld [wPressedKeys] , a
 	jp Main
 
 ; Then check the right button.
 CheckRight:
   ld a, [wCurKeys]
   and a, PADF_RIGHT
-  jp nz, CheckAlreadyRight
-  ld a, [wPressedKeys]
-  RES 4, a
-  ld [wPressedKeys], a
-  jp Main
-CheckAlreadyRight:
-	ld a, [wPressedKeys]
-	BIT 4, a
-	jp nz, Main
-Right:
-	ld a, [wPressedKeys]
-	or a, %0001_0000
-	ld [wPressedKeys], a
-  ; Move the player one pixel to the right.
+  jp z, Main
+RightPress:
+  
+  ld a , [wPressedKeys]
+  or %0010000
+  ld [wPressedKeys] , a
+
+  ; Move the paddle one pixel to the right.
   ld a, [_OAMRAM + 1]
-  add a, $8
+  add a, $1
   ; If we've already hit the edge of the playfield, don't move.
-  cp a, $A1
+  cp a, $A0
   jp z, Main
   ld [_OAMRAM + 1], a
   jp Main
+RightRelease:
+  ld a , [wPressedKeys]
+  xor %0010000
+  ld [wPressedKeys] , a
+	jp Main
 
 
 ; Copy bytes from one area to another.
@@ -543,21 +539,23 @@ Tilemap:
 	db $04, $09, $09, $09, $09, $09, $09, $09, $09, $09, $09, $09, $09, $07, $03, $03, $03, $03, $03, $03, 0,0,0,0,0,0,0,0,0,0,0,0
 TilemapEnd:
 
-Player:
-  dw `13333331
-  dw `30022003
-  dw `30022003
-  dw `32222223
-  dw `30022003
-  dw `30200203
-  dw `32000023
-  dw `13333331
-PlayerEnd:
+Paddle:
+    dw `13333331
+    dw `30022003
+    dw `30022003
+    dw `32222223
+    dw `30022003
+    dw `30200203
+    dw `32000023
+    dw `13333331
+PaddleEnd:
 
 SECTION "Counter", WRAM0
 wFrameCounter: db
 
+SECTION "Keys", WRAM0
+wPressedKeys: db
+
 SECTION "Input Variables", WRAM0
 wCurKeys: db
 wNewKeys: db
-wPressedKeys: db
