@@ -1,7 +1,14 @@
 set PATH=%~dp0;%PATH%
-RGBDS\windows\rgbasm -L -o main.o main.asm
-RGBDS\windows\rgblink -o GridCombat.gb main.o
-RGBDS\windows\rgbfix -v -p 0xFF GridCombat.gb
-RGBDS\windows\rgblink -n GridCombat.sym main.o	
-"bgb\bgb" GridCombat.gb
-Pause
+RGBDS\windows\rgbasm -L -o src\generated\main.o main.asm
+@if errorLevel 1 goto ERROR
+RGBDS\windows\rgblink -o src\generated\GridCombat.gb src\generated\main.o
+@if errorLevel 1 goto ERROR
+RGBDS\windows\rgbfix -v -p 0xFF src\generated\GridCombat.gb
+@if errorLevel 1 goto ERROR
+RGBDS\windows\rgblink -n src\generated\GridCombat.sym src\generated\main.o	
+@if errorLevel 1 goto ERROR
+"bgb\bgb" src\generated\GridCombat.gb
+exit
+
+:ERROR
+@Pause
