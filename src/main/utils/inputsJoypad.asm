@@ -37,6 +37,9 @@ UpdateKeys::
 	ret
 
 CheckKeysState::
+	ld a, [wNoneKeyPressed]
+	inc a
+	ld [wNoneKeyPressed], a
 ; First, check if the down button is pressed.
 CheckDown:
 	ld a, [wCurKeys]
@@ -57,9 +60,6 @@ Down:
 	; Move the player one pixel to the right.
 	ld a, [_OAMRAM]
 	add a, $8
-	; If we've already hit the edge of the playfield, don't move.
-	cp a, $98 + 1
-	ret z
 	ld [_OAMRAM], a
 	ret
 
@@ -83,9 +83,6 @@ Up:
 	; Move the player one pixel to the right.
 	ld a, [_OAMRAM]
 	sub a, $8
-	; If we've already hit the edge of the playfield, don't move.
-	cp a, $F
-	ret z
 	ld [_OAMRAM], a
 	ret
 
@@ -109,9 +106,6 @@ Left:
 	; Move the player one pixel to the left.
 	ld a, [_OAMRAM + 1]
 	sub a, $8
-	; If we've already hit the edge of the playfield, don't move.
-	cp a, $7
-	ret z
 	ld [_OAMRAM + 1], a
 	ret
 
@@ -123,11 +117,11 @@ CheckRight:
 	ld a, [wPressedKeys]
 	RES 4, a
 	ld [wPressedKeys], a
-	ret
+	jp NoneKeys
 CheckAlreadyRight:
 	ld a, [wPressedKeys]
 	BIT 4, a
-	ret nz
+	jp nz, NoneKeys
 Right:
 	ld a, [wPressedKeys]
 	or a, %0001_0000
@@ -135,13 +129,15 @@ Right:
 	; Move the player one pixel to the right.
 	ld a, [_OAMRAM + 1]
 	add a, $8
-	; If we've already hit the edge of the playfield, don't move.
-	cp a, $A1
-	ret z
 	ld [_OAMRAM + 1], a
-    ret 
+    ret
+NoneKeys:
+	ld a, 0
+	ld [wNoneKeyPressed], a
+	ret
 
 SECTION "Input Joypad Variables", WRAM0
 wCurKeys:: db
 wNewKeys:: db
 wPressedKeys:: db
+wNoneKeyPressed:: db

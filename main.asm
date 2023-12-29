@@ -14,7 +14,7 @@ SECTION "Header", ROM0[$100]
 
 EntryPoint:
 	ld a, AUDENA_OFF
-	ld [rNR52], a	
+	ld [rNR52], a
 WaitVBlank:
 	ld a , [rLY]
 	cp 144
@@ -36,9 +36,9 @@ WaitVBlank:
 	call Memcopy
 
 	; Copy the tile data
-	ld de, Player
+	ld de, PlayerTile
 	ld hl, $8000
-	ld bc, PlayerEnd - Player
+	ld bc, PlayerTileEnd - PlayerTile
 	call Memcopy
 
 	ld a , 0 
@@ -81,9 +81,43 @@ WaitVBlank2:
 	cp 144
 	jp c, WaitVBlank2
 
+	ld hl, _OAMRAM + 1
+	ld a, [hl]
+	ld [wPlayerLastX], a
+	ld hl, _OAMRAM
+	ld a, [hl]
+	ld [wPlayerLastY], a
+
 	; Check the current keys every frame and move left or right.
 	call UpdateKeys
 	call CheckKeysState
+
+	ld a, [wNoneKeyPressed]
+	cp a, 1
+	jp nz, Main
+
+	ld hl, _OAMRAM + 1
+	ld a, [hl]
+	sub a, 8
+	ld b, a
+	ld hl, _OAMRAM
+	ld a, [hl]
+	sub a, 16
+	ld c, a
+	call GetTileByPixel
+	ld [hl], 4
+
+	ld hl, wPlayerLastX
+	ld a, [hl]
+	sub a, 8
+	ld b, a
+	ld hl, wPlayerLastY
+	ld a, [hl]
+	sub a, 16
+	ld c, a
+	call GetTileByPixel
+	ld [hl], 0
+	
 	jp Main
 
 
@@ -143,8 +177,8 @@ GetTileByPixel:
 	; Convert the X position to an offset.
 	ld a, b
 	srl a ; a / 2
-	srl a ; a / 4
-	srl a ; a / 8
+	srl a ; a / 2	} /8
+	srl a ; a / 2	
 	; Add the two offsets together.
 	add a, l
 	ld l, a
@@ -174,16 +208,20 @@ IsWallTile:
 	cp a, $07
 	ret
 
-Player:
-	dw `13333331
-	dw `30022003
-	dw `30022003
-	dw `32222223
-	dw `30022003
-	dw `30200203
-	dw `32000023
-	dw `13333331
-PlayerEnd:
+PlayerTile:
+	dw `00010100
+	dw `00101010
+	dw `00222101
+	dw `03232210
+	dw `32222211
+	dw `00222220
+	dw `00222221
+	dw `03232230
+PlayerTileEnd:
 
 SECTION "Counter", WRAM0
 wFrameCounter: db
+	
+SECTION "Locations", WRAM0
+wPlayerLastX: db
+wPlayerLastY: db
