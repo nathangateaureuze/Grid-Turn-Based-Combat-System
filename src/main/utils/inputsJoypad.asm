@@ -57,10 +57,7 @@ Down:
 	ld a, [wPressedKeys]
 	or a, %1000_0000
 	ld [wPressedKeys], a
-	; Move the player one pixel to the right.
-	ld a, [_OAMRAM]
-	add a, $8
-	ld [_OAMRAM], a
+	call CharacterGoDown
 	ret
 
 ; Then check the right button.
@@ -80,10 +77,7 @@ Up:
 	ld a, [wPressedKeys]
 	or a, %0100_0000
 	ld [wPressedKeys], a
-	; Move the player one pixel to the right.
-	ld a, [_OAMRAM]
-	sub a, $8
-	ld [_OAMRAM], a
+	call CharacterGoUp
 	ret
 
 ; First, check if the left button is pressed.
@@ -103,10 +97,7 @@ Left:
 	ld a, [wPressedKeys]
 	or a, %0010_0000
 	ld [wPressedKeys], a
-	; Move the player one pixel to the left.
-	ld a, [_OAMRAM + 1]
-	sub a, $8
-	ld [_OAMRAM + 1], a
+	call CharacterGoLeft
 	ret
 
 ; Then check the right button.
@@ -126,10 +117,7 @@ Right:
 	ld a, [wPressedKeys]
 	or a, %0001_0000
 	ld [wPressedKeys], a
-	; Move the player one pixel to the right.
-	ld a, [_OAMRAM + 1]
-	add a, $8
-	ld [_OAMRAM + 1], a
+	call CharacterGoRight
     ret
 NoneKeys:
 	ld a, 0

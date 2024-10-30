@@ -1,6 +1,7 @@
 INCLUDE "src/main/utils/hardware.inc"
 INCLUDE "src/main/states/gameplay/backgrounds/background1.asm"
 INCLUDE "src/main/utils/inputsJoypad.asm"
+INCLUDE "src/main/states/gameplay/objects/character.asm"
 
 DEF BRICK_LEFT EQU $05
 DEF BRICK_RIGHT EQU $06
@@ -68,6 +69,9 @@ ClearOam:
 	ld [rBGP] , a
 	ld [rOBP0] , a
 
+	ld a, 3
+	ld [wCharacterMovPo], a
+
 	ld a , 0
 	ld [wFrameCounter] , a
 Main:
@@ -81,14 +85,15 @@ WaitVBlank2:
 	cp 144
 	jp c, WaitVBlank2
 
+	;Save previous Positions
 	ld hl, _OAMRAM + 1
 	ld a, [hl]
-	ld [wPlayerLastX], a
+	ld [wCharacterLastX], a
 	ld hl, _OAMRAM
 	ld a, [hl]
-	ld [wPlayerLastY], a
+	ld [wCharacterLastY], a
 
-	; Check the current keys every frame and move left or right.
+	; Check the current keys
 	call UpdateKeys
 	call CheckKeysState
 
@@ -107,11 +112,11 @@ WaitVBlank2:
 	call GetTileByPixel
 	ld [hl], 4
 
-	ld hl, wPlayerLastX
+	ld hl, wCharacterLastX
 	ld a, [hl]
 	sub a, 8
 	ld b, a
-	ld hl, wPlayerLastY
+	ld hl, wCharacterLastY
 	ld a, [hl]
 	sub a, 16
 	ld c, a
@@ -221,7 +226,3 @@ PlayerTileEnd:
 
 SECTION "Counter", WRAM0
 wFrameCounter: db
-	
-SECTION "Locations", WRAM0
-wPlayerLastX: db
-wPlayerLastY: db
